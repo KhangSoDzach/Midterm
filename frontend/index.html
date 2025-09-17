@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>iBanking - Tuition</title>
+  <style>
+    body { 
+        font-family: Arial, sans-serif; 
+        background: #f5f5f5; 
+        margin: 0; }
+    header { 
+        background: #b30000;
+        color: white; 
+        padding: 10px 20px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between;
+    }
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 50px;
+    }
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    .balance {
+        font-weight: bold;
+        font-size: 16px;
+    }
+    .logout-btn {
+        padding: 6px 12px;
+        background: white;
+        color: #b30000;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .logout-btn:hover {
+        background: #f2f2f2;
+    }
+
+    .container { 
+        display: flex; 
+        padding: 20px; 
+        }
+    .main { 
+        flex: 3; 
+        background: white; 
+        padding: 20px; 
+        border-radius: 8px; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    }
+    .sidebar { 
+        flex: 1; 
+        margin-left: 20px; 
+    }
+    .help-box { 
+        background: white; 
+        padding: 15px; 
+        border-radius: 8px; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    }
+    h2 { 
+        margin-top: 0; 
+    }
+    label { 
+        display: block; 
+        margin-top: 14px; 
+        font-weight: bold; 
+    }
+    input, select { 
+        width: 100%; 
+        padding: 10px; 
+        margin-top: 5px; 
+        border: 1px solid #2a54dd; 
+        border-radius: 5px; 
+    }
+    input[disabled] {
+        background: #eef3ff;      /* nền khác để nổi bật */
+        color: #003366;           /* chữ xanh đậm */
+        font-weight: bold;
+    }
+    .search-box {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .search-btn {
+        padding: 10px 15px;
+        background: #2a54dd;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .search-btn:hover {
+        background: #1e3fa8;
+    }
+    button { 
+        margin-top: 15px; 
+        padding: 10px 15px; 
+        background: #b30000; 
+        color: white; 
+        border: none; 
+        border-radius: 4px; 
+        cursor: pointer; 
+    }
+    button:hover { 
+        background: #8b0000; 
+    }
+    .steps { 
+        display: flex; 
+        justify-content: space-between; 
+        margin-bottom: 20px; 
+    }
+    .step { 
+        flex: 1; 
+        padding-top: 20px;
+        text-align: center; 
+        font-weight: bold; 
+        font-size: 20px;
+    }
+    .active { color: #b30000; }
+    fieldset{
+      margin-top: 5px;
+      padding-right: 30px;
+      padding-bottom: 30px ;
+      font-size: 15px;
+      border: 3px solid #000000; 
+      border-radius: 6px; 
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <h1 style="margin: 0;">iBanking</h1>
+      <div>
+        <p style="margin: 0;color: #ada9a9;">Welcome back</p>
+        <p style="margin: 0; font-weight: bold; font-size: 25px;">Nguyen Van A</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="balance">Balance: 5,000,000 VND</div>
+      <button class="logout-btn" onclick="window.location.href='login.html'">Log out</button>
+    </div>
+  </header>
+
+  <div class="steps">
+    <div class="step active">1. Select</div>
+    <div class="step">2. OTP</div>
+    <div class="step">3. Completion</div>
+  </div>
+
+  <div class="container">
+    <div class="main">
+      <h2>Tuition Payment</h2>
+      <form>
+        <fieldset>
+          <legend>Payer Information</legend>
+          <label>Full Name </label>
+          <input type="text" value="Đặng Bảo Khang" disabled>
+          <label>Phone Number</label>
+          <input type="text" value="0901234567" disabled>
+          <label>Email</label>
+          <input type="text" value="522H0003@student.edu.vn" disabled>
+        </fieldset>
+
+        <fieldset>
+          <legend>Tuition Information</legend>
+          <label>Student ID </label>
+          <div class="search-box">
+            <input type="text" placeholder="Enter Student ID">
+            <button type="button" class="search-btn">Search</button>
+          </div>
+          <label>Student Name</label>
+          <input type="text" disabled placeholder="Displayed automatically">
+          <label>Amount Due</label>
+          <input type="text" disabled placeholder="Fetched by Student ID">
+        </fieldset>
+
+        <fieldset>
+          <legend>Payment Information</legend>
+        
+          <label>Transaction ID</label>
+          <input type="text" value="TXN202509140001" disabled>
+
+          <label>Student Name</label>
+          <input type="text" value="Đặng Bảo Khang" disabled>
+        
+          <label>Transfer Content</label>
+          <input type="text" value="Tuition fee - 522H0003" disabled>
+
+          <label>Amount</label>
+          <input type="text" value="10,000,000 VND" disabled>
+        
+          <div style="display: flex; align-items: center;white-space: nowrap; margin-top:10px;">
+            <input type="checkbox" id="terms">
+            <label for="terms">I agree to the terms and conditions</label>
+          </div>
+        </fieldset>
+        
+        <button type="button" onclick="window.location.href='otp.html'">Confirm Transaction</button>
+      </form>
+    </div>
+
+    <div class="sidebar" style="white-space: nowrap;">
+      <div class="help-box">
+        <h3>Help</h3>
+        <ul>
+          <li>Student Info</li>
+          <li>View Tuition List</li>
+          <li>Manage Transactions</li>
+          <li>Payment Limits</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

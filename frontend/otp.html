@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>iBanking - OTP</title>
+  <style>
+    body { 
+        font-family: Arial, sans-serif; 
+        background: #f5f5f5; 
+        margin: 0; 
+    }
+    header { 
+        background: #b30000;
+        color: white; 
+        padding: 10px 20px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between;
+    }
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 50px;
+    }
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    .balance {
+        font-weight: bold;
+        font-size: 16px;
+    }
+    .logout-btn {
+        padding: 6px 12px;
+        background: white;
+        color: #b30000;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .logout-btn:hover {
+        background: #f2f2f2;
+    }
+
+    .steps { 
+        display: flex; 
+        justify-content: space-between; 
+        margin-bottom: 20px; 
+        background: #fff;
+        padding: 10px 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .step { 
+        flex: 1; 
+        padding-top: 10px;
+        text-align: center; 
+        font-weight: bold; 
+        font-size: 20px;
+    }
+    .active { color: #b30000; }
+
+    /* OTP Box */
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 60px;
+    }
+    .otp-box {
+        background: white;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        text-align: center;
+        max-width: 400px;
+    }
+    .otp-box h2 {
+        margin-bottom: 10px;
+        color: #b30000;
+    }
+    .otp-box p {
+        margin-bottom: 20px;
+        color: #555;
+    }
+    .otp-inputs {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .otp-inputs input {
+        width: 45px;
+        height: 55px;
+        text-align: center;
+        font-size: 22px;
+        border: 2px solid #b30000;
+        border-radius: 8px;
+    }
+    .otp-inputs input:focus {
+        outline: none;
+        border-color: #8b0000;
+    }
+    .login-btn {
+        width: 100%;
+        padding: 12px;
+        background: #b30000;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    .login-btn:hover {
+        background: #8b0000;
+    }
+    .resend {
+        margin-top: 15px;
+        font-size: 14px;
+    }
+    .resend a {
+        color: #b30000;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    .resend a:hover {
+        text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header giữ nguyên -->
+  <header>
+    <div class="header-left">
+      <h1 style="margin: 0;">iBanking</h1>
+      <div>
+        <p style="margin: 0;color: #ada9a9;">Welcome back</p>
+        <p style="margin: 0; font-weight: bold; font-size: 25px;">Nguyen Van A</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="balance">Balance: 5,000,000 VND</div>
+      <button class="logout-btn" onclick="window.location.href='login.html'">Log out</button>
+    </div>
+  </header>
+
+  <!-- Steps giữ nguyên nhưng active = OTP -->
+  <div class="steps">
+    <div class="step">1. Select</div>
+    <div class="step active">2. OTP</div>
+    <div class="step">3. Completion</div>
+  </div>
+
+  <!-- Form OTP -->
+  <div class="container">
+    <div class="otp-box">
+      <h2>OTP Authentication</h2>
+      <p>Enter the 6 digit OTP sent to your email.</p>
+      <div class="otp-inputs">
+        <input type="text" maxlength="1">
+        <input type="text" maxlength="1">
+        <input type="text" maxlength="1">
+        <input type="text" maxlength="1">
+        <input type="text" maxlength="1">
+        <input type="text" maxlength="1">
+      </div>
+      <button class="login-btn" onclick="window.location.href='completion.html'">Login</button>
+      <div class="resend">
+        Didn’t receive an OTP? <a href="#">Resend</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Auto focus to next input when typing OTP
+    const otpInputs = document.querySelectorAll('.otp-inputs input');
+    
+    otpInputs.forEach((input, index) => {
+      input.addEventListener('input', function() {
+        if (this.value.length === 1 && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
+      });
+      
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && this.value === '' && index > 0) {
+          otpInputs[index - 1].focus();
+        }
+      });
+    });
+
+    // Focus on first input when page loads
+    window.addEventListener('load', function() {
+      otpInputs[0].focus();
+    });
+  </script>
+</body>
+</html>
