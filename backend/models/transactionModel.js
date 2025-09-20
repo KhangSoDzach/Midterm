@@ -1,59 +1,103 @@
-const { sql, poolPromise } = require('../config/db');
+const { mongoose } = require('../config/db');
+
+const transactionSchema = new mongoose.Schema({
+  user_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  student_id: {
+    type: String,
+    required: true,
+    maxlength: 10
+  },
+  amount: {
+    type: Number,
+    required: true
+  },
+  transaction_date: {
+    type: Date,
+    default: Date.now
+  },
+  status: {
+    type: String,
+    default: 'PENDING',
+    maxlength: 20
+  },
+  otp: {
+    type: String,
+    maxlength: 6
+  },
+  otp_expiry: {
+    type: Date
+  }
+});
+
+const transactionHistorySchema = new mongoose.Schema({
+  transaction_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Transaction',
+    required: true
+  },
+  action: {
+    type: String,
+    required: true,
+    maxlength: 100
+  },
+  performed_by: {
+    type: String,
+    maxlength: 50
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const Transaction = mongoose.model('Transaction', transactionSchema);
+const TransactionHistory = mongoose.model('TransactionHistory', transactionHistorySchema);
 
 async function createTransaction(userId, studentId, amount) {
-  const pool = await poolPromise;
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate OTP 6 
   const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // ttl 5 phút
 
-  const result = await pool.request()
-    .input('userId', sql.Int, userId)
-    .input('studentId', sql.VarChar, studentId)
-    .input('amount', sql.Decimal(18, 2), amount)
-    .input('otp', sql.VarChar, otp)
-    .input('otpExpiry', sql.DateTime, otpExpiry)
-    .query(`
-      INSERT INTO Transactions (user_id, student_id, amount, otp, otp_expiry)
-      OUTPUT INSERTED.transaction_id
-      VALUES (@userId, @studentId, @amount, @otp, @otpExpiry)
-    `);
-  return { transactionId: result.recordset[0].transaction_id, otp, otpExpiry };
+  const transaction = new Transaction({
+    user_id: userId,
+    student_id: studentId,
+    amount: amount,
+    otp: otp,
+    otp_expiry: otpExpiry
+  });
+
+  const savedTransaction = await transaction.save();
+  return { transactionId: savedTransaction._id, otp, otpExpiry };
 }
 
 async function verifyOtp(transactionId, otp) {
-  const pool = await poolPromise;
-  const result = await pool.request()
-    .input('transactionId', sql.Int, transactionId)
-    .input('otp', sql.VarChar, otp)
-    .query(`
-      SELECT * FROM Transactions 
-      WHERE transaction_id = @transactionId AND otp = @otp AND otp_expiry > GETDATE()
-    `);
-  return result.recordset[0];
+  return await Transaction.findOne({
+    _id: transactionId,
+    otp: otp,
+    otp_expiry: { $gt: new Date() }
+  });
 }
 
 async function completeTransaction(transactionId, userId, amount) {
-  const pool = await poolPromise;
-  await pool.request()
-    .input('transactionId', sql.Int, transactionId)
-    .query(`UPDATE Transactions SET status = 'COMPLETED', otp = NULL, otp_expiry = NULL WHERE transaction_id = @transactionId`);
+  await Transaction.findByIdAndUpdate(transactionId, {
+    status: 'COMPLETED',
+    $unset: { otp: 1, otp_expiry: 1 }
+  });
 
   // Ghi history
-  await pool.request()
-    .input('transactionId', sql.Int, transactionId)
-    .input('action', sql.VarChar, 'Transaction Completed')
-    .input('performedBy', sql.VarChar, `User ${userId}`)
-    .query(`
-      INSERT INTO Transaction_History (transaction_id, action, performed_by)
-      VALUES (@transactionId, @action, @performedBy)
-    `);
+  const history = new TransactionHistory({
+    transaction_id: transactionId,
+    action: 'Transaction Completed',
+    performed_by: `User ${userId}`
+  });
+  await history.save();
 }
 
 async function getTransactionById(transactionId) {
-  const pool = await poolPromise;
-  const result = await pool.request()
-    .input('transactionId', sql.Int, transactionId)
-    .query('SELECT * FROM Transactions WHERE transaction_id = @transactionId');
-  return result.recordset[0];
+  return await Transaction.findById(transactionId);
 }
 
-module.exports = { createTransaction, verifyOtp, completeTransaction, getTransactionById };
+module.exports = { Transaction, TransactionHistory, createTransaction, verifyOtp, completeTransaction, getTransactionById };

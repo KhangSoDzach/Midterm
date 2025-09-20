@@ -1,6 +1,6 @@
 const { findStudentById } = require('../models/studentModel');
 const { createTransaction, completeTransaction, getTransactionById } = require('../models/transactionModel');
-const { updateBalance } = require('../models/userModel');
+const { updateBalance, User } = require('../models/userModel');
 const { sendOtpEmail } = require('../utils/email');
 
 async function searchStudent(req, res) {
@@ -15,7 +15,7 @@ async function searchStudent(req, res) {
 async function createPayment(req, res) {
   const { studentId, amount } = req.body;
   const userId = req.user.userId; 
-  const user = await findUserByUsername(req.user.username); 
+  const user = await User.findById(userId); 
   if (user.available_balance < amount) {
     return res.status(400).json({ message: 'Insufficient balance' });
   }
@@ -39,9 +39,10 @@ async function completePayment(req, res) {
   await completeTransaction(transactionId, transaction.user_id, transaction.amount);
   await updateBalance(transaction.user_id, transaction.amount);
 
+  const student = await findStudentById(transaction.student_id);
   const invoice = {
-    transactionId: transaction.transaction_id,
-    studentName: (await findStudentById(transaction.student_id)).full_name,
+    transactionId: transaction._id,
+    studentName: student.full_name,
     studentId: transaction.student_id,
     amount: transaction.amount,
     date: transaction.transaction_date,

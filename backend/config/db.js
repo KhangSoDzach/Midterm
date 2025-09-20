@@ -1,24 +1,25 @@
-const sql = require('mssql');
+const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-dotenv.config();
+const path = require('path');
 
-const config = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  server: process.env.DB_SERVER,
-  database: process.env.DB_DATABASE,
-  options: {
-    encrypt: true, 
-    trustServerCertificate: true 
+// Configure dotenv to look for .env file in the backend directory
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+// Debug: Log environment variables
+console.log('Environment variables loaded:');
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
+
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ibanking_payment', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error('Database Connection Failed:', error);
+    process.exit(1);
   }
 };
 
-const poolPromise = new sql.ConnectionPool(config)
-  .connect()
-  .then(pool => {
-    console.log('Connected to MSSQL');
-    return pool;
-  })
-  .catch(err => console.log('Database Connection Failed! Bad Config: ', err));
-
-module.exports = { sql, poolPromise };
+module.exports = { connectDB, mongoose };

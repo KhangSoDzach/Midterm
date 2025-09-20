@@ -12,7 +12,7 @@ async function login(req, res) {
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
-  const token = jwt.sign({ userId: user.user_id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
   res.json({ token, user: { full_name: user.full_name, balance: user.available_balance } });
 }
 
