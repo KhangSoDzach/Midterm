@@ -72,19 +72,73 @@
   </header>
 
   <div class="container">
-    <div class="login-box">
+    <div class="box">
         <h2>Login</h2>
-        <form action="index.html" method="get">
+        <div id="error-message" style="color: red; text-align: center; margin-bottom: 10px; display: none;"></div>
+        <form id="loginForm">
           <label for="username">Username</label>
           <input type="text" id="username" name="username" required>
     
           <label for="password">Password</label>
           <input type="password" id="password" name="password" required>
     
-          <button type="submit">Login</button>
+          <button type="submit" id="loginBtn">Login</button>
         </form>
       </div>
   </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('error-message');
+      const loginBtn = document.getElementById('loginBtn');
+      
+      // Reset error message
+      errorDiv.style.display = 'none';
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Logging in...';
+      
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          // Lưu token và thông tin user vào localStorage
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.customer));
+          
+          // Chuyển hướng đến trang chính
+          window.location.href = 'index.html';
+        } else {
+          // Hiển thị lỗi
+          errorDiv.textContent = data.message || 'Login failed';
+          errorDiv.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        errorDiv.textContent = 'Network error. Please try again.';
+        errorDiv.style.display = 'block';
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
+      }
+    });
+
+    // Kiểm tra nếu đã đăng nhập thì chuyển hướng
+    if (localStorage.getItem('token')) {
+      window.location.href = 'index.html';
+    }
+  </script>
 </body>
 </html>
 

@@ -141,12 +141,12 @@
       <h1 style="margin: 0;">iBanking</h1>
       <div>
         <p style="margin: 0;color: #ada9a9;">Welcome back</p>
-        <p style="margin: 0; font-weight: bold; font-size: 25px;">Nguyen Van A</p>
+        <p id="user-name" style="margin: 0; font-weight: bold; font-size: 25px;">Loading...</p>
       </div>
     </div>
     <div class="header-right">
-      <div class="balance">Balance: 5,000,000 VND</div>
-      <button class="logout-btn" onclick="window.location.href='login.html'">Log out</button>
+      <div id="user-balance" class="balance">Balance: Loading...</div>
+      <button class="logout-btn" onclick="logout()">Log out</button>
     </div>
   </header>
 
@@ -163,24 +163,24 @@
         <fieldset>
           <legend>Payer Information</legend>
           <label>Full Name </label>
-          <input type="text" value="Đặng Bảo Khang" disabled>
+          <input type="text" id="payer-name" value="Loading..." disabled>
           <label>Phone Number</label>
-          <input type="text" value="0901234567" disabled>
+          <input type="text" id="payer-phone" value="Loading..." disabled>
           <label>Email</label>
-          <input type="text" value="522H0003@student.edu.vn" disabled>
+          <input type="text" id="payer-email" value="Loading..." disabled>
         </fieldset>
 
         <fieldset>
           <legend>Tuition Information</legend>
           <label>Student ID </label>
           <div class="search-box">
-            <input type="text" placeholder="Enter Student ID">
-            <button type="button" class="search-btn">Search</button>
+            <input type="text" id="student-id-input" placeholder="Enter Student ID">
+            <button type="button" class="search-btn" onclick="searchTuition()">Search</button>
           </div>
           <label>Student Name</label>
-          <input type="text" disabled placeholder="Displayed automatically">
+          <input type="text" id="student-name" disabled placeholder="Displayed automatically">
           <label>Amount Due</label>
-          <input type="text" disabled placeholder="Fetched by Student ID">
+          <input type="text" id="amount-due" disabled placeholder="Fetched by Student ID">
         </fieldset>
 
         <fieldset>
@@ -204,7 +204,7 @@
           </div>
         </fieldset>
         
-        <button type="button" onclick="window.location.href='otp.html'">Confirm Transaction</button>
+        <button type="button" onclick="proceedToOTP()">Confirm Transaction</button>
       </form>
     </div>
 
@@ -220,5 +220,177 @@
       </div>
     </div>
   </div>
+
+  <script>
+    let currentUser = null;
+    let currentTuition = null;
+
+    // Kiểm tra authentication khi trang load
+    window.addEventListener('DOMContentLoaded', function() {
+      checkAuth();
+    });
+
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      
+      if (!token || !user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      try {
+        currentUser = JSON.parse(user);
+        displayUserInfo();
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        logout();
+      }
+    }
+
+    function displayUserInfo() {
+      if (currentUser) {
+        document.getElementById('user-name').textContent = currentUser.full_name;
+        document.getElementById('user-balance').textContent = `Balance: ${formatCurrency(currentUser.balance)}`;
+        
+        // Cần fetch thêm thông tin chi tiết của user từ API
+        fetchUserDetails();
+      }
+    }
+
+    async function fetchUserDetails() {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const userProfile = await response.json();
+          // Cập nhật thông tin payer
+          document.getElementById('payer-name').value = userProfile.full_name;
+          document.getElementById('payer-phone').value = userProfile.phone_number;
+          document.getElementById('payer-email').value = userProfile.email;
+          
+          // Cập nhật balance trong header
+          document.getElementById('user-balance').textContent = `Balance: ${formatCurrency(userProfile.balance)}`;
+          
+          // Cập nhật localStorage với thông tin mới
+          const updatedUser = { ...currentUser, ...userProfile };
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          currentUser = updatedUser;
+        } else {
+          console.error('Failed to fetch user profile');
+          // Fallback to stored user info
+          document.getElementById('payer-name').value = currentUser.full_name;
+          document.getElementById('payer-phone').value = "N/A";
+          document.getElementById('payer-email').value = "N/A";
+        }
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+        // Fallback to stored user info
+        document.getElementById('payer-name').value = currentUser.full_name;
+        document.getElementById('payer-phone').value = "N/A";
+        document.getElementById('payer-email').value = "N/A";
+      }
+    }
+
+    async function searchTuition() {
+      const studentId = document.getElementById('student-id-input').value.trim();
+      if (!studentId) {
+        alert('Please enter Student ID');
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tuition/student/${studentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const tuitionData = await response.json();
+          if (tuitionData && tuitionData.length > 0) {
+            currentTuition = tuitionData[0]; // Lấy tuition đầu tiên
+            document.getElementById('student-name').value = currentTuition.student_name;
+            document.getElementById('amount-due').value = formatCurrency(currentTuition.tuition_amount);
+            
+            // Cập nhật thông tin thanh toán
+            updatePaymentInfo();
+          } else {
+            alert('No tuition found for this student ID');
+            clearTuitionInfo();
+          }
+        } else {
+          const errorData = await response.json();
+          alert(errorData.message || 'Error searching tuition information');
+          clearTuitionInfo();
+        }
+      } catch (error) {
+        console.error('Error searching tuition:', error);
+        alert('Network error. Please try again.');
+      }
+    }
+
+    function updatePaymentInfo() {
+      if (currentTuition) {
+        // Cập nhật thông tin giao dịch
+        const transactionId = 'TXN' + new Date().getFullYear() + 
+                             String(new Date().getMonth() + 1).padStart(2, '0') + 
+                             String(new Date().getDate()).padStart(2, '0') + 
+                             String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+        
+        document.querySelector('fieldset:nth-of-type(3) input:nth-of-type(1)').value = transactionId;
+        document.querySelector('fieldset:nth-of-type(3) input:nth-of-type(2)').value = currentTuition.student_name;
+        document.querySelector('fieldset:nth-of-type(3) input:nth-of-type(3)').value = 
+          `Tuition fee - ${currentTuition.student_id}`;
+        document.querySelector('fieldset:nth-of-type(3) input:nth-of-type(4)').value = 
+          formatCurrency(currentTuition.tuition_amount);
+      }
+    }
+
+    function clearTuitionInfo() {
+      document.getElementById('student-name').value = '';
+      document.getElementById('amount-due').value = '';
+      currentTuition = null;
+    }
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+      }).format(amount);
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = 'login.html';
+    }
+
+    // Kiểm tra form trước khi chuyển sang OTP
+    function proceedToOTP() {
+      if (!currentTuition) {
+        alert('Please search and select tuition information first');
+        return;
+      }
+      
+      const termsChecked = document.getElementById('terms').checked;
+      if (!termsChecked) {
+        alert('Please agree to the terms and conditions');
+        return;
+      }
+
+      // Lưu thông tin tuition để sử dụng ở trang OTP
+      localStorage.setItem('currentTuition', JSON.stringify(currentTuition));
+      window.location.href = 'otp.html';
+    }
+  </script>
 </body>
 </html>

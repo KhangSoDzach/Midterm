@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { login, verifyOtpController } = require('../controllers/authController');
+const { login, verifyOtpController, getUserProfile } = require('../controllers/authController');
 const { searchTuition, getTuitionById, createTuitionPayment, completeTuitionPayment } = require('../controllers/paymentController');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
@@ -20,6 +20,7 @@ const authMiddleware = (req, res, next) => {
 
 // Authentication routes
 router.post('/login', login);
+router.get('/profile', authMiddleware, getUserProfile);
 
 // Tuition routes
 router.get('/tuition/student/:studentId', authMiddleware, searchTuition);

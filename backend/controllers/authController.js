@@ -36,4 +36,23 @@ async function verifyOtpController(req, res) {
   res.json({ message: 'OTP verified' });
 }
 
-module.exports = { login, verifyOtpController };
+async function getUserProfile(req, res) {
+  const customerId = req.user.customerId;
+  const customer = await findCustomerByUsername(req.user.username) || 
+                  await require('../models/customerModel').findCustomerById(customerId);
+  
+  if (!customer) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  
+  res.json({
+    customer_id: customer.customer_id,
+    full_name: customer.full_name,
+    phone_number: customer.phone_number,
+    email: customer.email,
+    address: customer.address,
+    balance: customer.available_balance
+  });
+}
+
+module.exports = { login, verifyOtpController, getUserProfile };

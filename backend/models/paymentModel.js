@@ -31,22 +31,6 @@ const paymentSchema = new mongoose.Schema({
     default: 'PENDING',
     enum: ['PENDING', 'COMPLETED', 'FAILED', 'CANCELLED']
   },
-  payment_method: {
-    type: String,
-    default: 'ONLINE_BANKING',
-    maxlength: 50
-  },
-  otp: {
-    type: String,
-    maxlength: 6
-  },
-  otp_expiry: {
-    type: Date
-  },
-  transaction_reference: {
-    type: String,
-    maxlength: 100
-  }
 }, {
   timestamps: true
 });
