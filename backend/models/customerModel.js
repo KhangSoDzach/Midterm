@@ -1,6 +1,12 @@
 const { mongoose } = require('../config/db');
 
-const userSchema = new mongoose.Schema({
+const customerSchema = new mongoose.Schema({
+  customer_id: {
+    type: String,
+    required: true,
+    unique: true,
+    maxlength: 20
+  },
   username: {
     type: String,
     required: true,
@@ -37,21 +43,25 @@ const userSchema = new mongoose.Schema({
     default: 0.00
   }
 }, {
-  timestamps: true // This will add createdAt and updatedAt fields automatically
+  timestamps: true
 });
 
-const User = mongoose.model('User', userSchema);
+const Customer = mongoose.model('Customer', customerSchema);
 
-async function findUserByUsername(username) {
-  return await User.findOne({ username });
+async function findCustomerByUsername(username) {
+  return await Customer.findOne({ username });
 }
 
-async function updateBalance(userId, amount) {
-  return await User.findByIdAndUpdate(
-    userId,
+async function findCustomerById(customerId) {
+  return await Customer.findOne({ customer_id: customerId });
+}
+
+async function updateBalance(customerId, amount) {
+  return await Customer.findOneAndUpdate(
+    { customer_id: customerId },
     { $inc: { available_balance: -amount } },
     { new: true }
   );
 }
 
-module.exports = { User, findUserByUsername, updateBalance };
+module.exports = { Customer, findCustomerByUsername, findCustomerById, updateBalance };

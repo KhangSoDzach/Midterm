@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { login, verifyOtpController } = require('../controllers/authController');
-const { searchStudent, createPayment, completePayment } = require('../controllers/paymentController');
+const { searchTuition, getTuitionById, createTuitionPayment, completeTuitionPayment } = require('../controllers/paymentController');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -18,12 +18,18 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
+// Authentication routes
 router.post('/login', login);
-router.get('/student/:studentId', authMiddleware, searchStudent);
-router.post('/payment/create', authMiddleware, createPayment);
-router.post('/otp/verify', authMiddleware, verifyOtpController);
-router.post('/payment/complete', authMiddleware, completePayment);
 
-// Thêm route khác nếu cần: logout, history, etc.
+// Tuition routes
+router.get('/tuition/student/:studentId', authMiddleware, searchTuition);
+router.get('/tuition/:tuitionFeeId', authMiddleware, getTuitionById);
+
+// Payment routes
+router.post('/payment/create', authMiddleware, createTuitionPayment);
+router.post('/payment/complete', authMiddleware, completeTuitionPayment);
+router.post('/otp/verify', authMiddleware, verifyOtpController);
+
+
 
 module.exports = router;

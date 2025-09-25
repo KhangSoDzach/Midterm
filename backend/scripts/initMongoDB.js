@@ -1,6 +1,7 @@
 const { connectDB, mongoose } = require('../config/db');
-const { User } = require('../models/userModel');
-const { Student } = require('../models/studentModel');
+const { Customer } = require('../models/customerModel');
+const { Tuition } = require('../models/tuitionModel');
+const { Payment } = require('../models/paymentModel');
 const bcrypt = require('bcrypt');
 
 async function initializeDatabase() {
@@ -8,74 +9,122 @@ async function initializeDatabase() {
     // Connect to MongoDB
     await connectDB();
     
-    console.log('Initializing MongoDB database...');
+    console.log('Initializing MongoDB database with new ERD structure...');
     
     // Clear existing data (optional - remove in production)
-    await User.deleteMany({});
-    await Student.deleteMany({});
+    await Customer.deleteMany({});
+    await Tuition.deleteMany({});
+    await Payment.deleteMany({});
     console.log('Cleared existing data');
     
-    // Create sample users
-    const sampleUsers = [
+    // Create sample customers
+    const sampleCustomers = [
       {
+        customer_id: 'CUST001',
         username: 'admin',
         password: bcrypt.hashSync('admin123', 10),
         full_name: 'Administrator',
         phone_number: '0123456789',
         email: 'admin@example.com',
         address: '123 Admin Street',
-        available_balance: 10000000
+        available_balance: 50000000
       },
       {
+        customer_id: 'CUST002',
         username: 'user1',
         password: bcrypt.hashSync('user123', 10),
         full_name: 'Nguyen Van A',
         phone_number: '0987654321',
         email: 'user1@example.com',
         address: '456 User Street',
-        available_balance: 5000000
-      }
-    ];
-    
-    await User.insertMany(sampleUsers);
-    console.log('Created sample users');
-    
-    // Create sample students
-    const sampleStudents = [
+        available_balance: 25000000
+      },
       {
-        student_id: '522H0003',
+        customer_id: 'CUST003',
+        username: 'khang',
+        password: bcrypt.hashSync('khang123', 10),
         full_name: 'Dang Bao Khang',
-        tuition_amount: 15000000
-      },
-      {
-        student_id: '522H0028',
-        full_name: 'Le Nguyen Minh Kha',
-        tuition_amount: 12000000
-      },
-      {
-        student_id: '522H0020',
-        full_name: 'Hoang Van Minh',
-        tuition_amount: 18000000
+        phone_number: '0901234567',
+        email: '522H0003@student.edu.vn',
+        address: 'HCMC',
+        available_balance: 20000000
       }
     ];
     
-    await Student.insertMany(sampleStudents);
-    console.log('Created sample students');
+    await Customer.insertMany(sampleCustomers);
+    console.log('Created sample customers');
+    
+    // Create sample tuition fees
+    const sampleTuitions = [
+      {
+        tuition_fee_id: 'TUI001',
+        student_id: '522H0003',
+        student_name: 'Dang Bao Khang',
+        semester: 'HK1',
+        academic_year: '2024-2025',
+        tuition_amount: 15000000,
+        due_date: new Date('2024-12-31'),
+        status: 'UNPAID'
+      },
+      {
+        tuition_fee_id: 'TUI002',
+        student_id: '522H0028',
+        student_name: 'Le Nguyen Minh Kha',
+        semester: 'HK1',
+        academic_year: '2024-2025',
+        tuition_amount: 12000000,
+        due_date: new Date('2024-12-31'),
+        status: 'UNPAID'
+      },
+      {
+        tuition_fee_id: 'TUI003',
+        student_id: '522H0020',
+        student_name: 'Hoang Van Minh',
+        semester: 'HK1',
+        academic_year: '2024-2025',
+        tuition_amount: 18000000,
+        due_date: new Date('2024-12-31'),
+        status: 'UNPAID'
+      },
+      {
+        tuition_fee_id: 'TUI004',
+        student_id: '522H0003',
+        student_name: 'Dang Bao Khang',
+        semester: 'HK2',
+        academic_year: '2024-2025',
+        tuition_amount: 16000000,
+        due_date: new Date('2025-05-31'),
+        status: 'UNPAID'
+      }
+    ];
+    
+    await Tuition.insertMany(sampleTuitions);
+    console.log('Created sample tuition fees');
     
     console.log('Database initialization completed successfully!');
     
     // Display sample data
-    console.log('\n=== Sample Users ===');
-    const users = await User.find({}, { password: 0 });
-    users.forEach(user => {
-      console.log(`Username: ${user.username}, Name: ${user.full_name}, Balance: ${user.available_balance}`);
+    console.log('\n=== Sample Customers ===');
+    const customers = await Customer.find({}, { password: 0 });
+    customers.forEach(customer => {
+      console.log(`ID: ${customer.customer_id}, Username: ${customer.username}, Name: ${customer.full_name}, Balance: ${customer.available_balance}`);
     });
     
-    console.log('\n=== Sample Students ===');
-    const students = await Student.find({});
-    students.forEach(student => {
-      console.log(`ID: ${student.student_id}, Name: ${student.full_name}, Tuition: ${student.tuition_amount}`);
+    console.log('\n=== Sample Tuition Fees ===');
+    const tuitions = await Tuition.find({});
+    tuitions.forEach(tuition => {
+      console.log(`Fee ID: ${tuition.tuition_fee_id}, Student: ${tuition.student_name} (${tuition.student_id}), Amount: ${tuition.tuition_amount}, Status: ${tuition.status}`);
     });
+    
+    console.log('\n=== Payment Records ===');
+    const payments = await Payment.find({});
+    if (payments.length > 0) {
+      payments.forEach(payment => {
+        console.log(`Payment ID: ${payment.payment_id}, Customer: ${payment.customer_id}, Tuition: ${payment.tuition_fee_id}, Amount: ${payment.amount}, Status: ${payment.status}`);
+      });
+    } else {
+      console.log('No payment records yet');
+    }
     
   } catch (error) {
     console.error('Error initializing database:', error);
