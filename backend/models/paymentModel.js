@@ -26,8 +26,8 @@ const paymentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    default: 'PENDING',
-    enum: ['PENDING', 'COMPLETED', 'FAILED', 'CANCELLED']
+    default: 'CANCELLED',
+    enum: ['COMPLETED', 'FAILED', 'CANCELLED']
   },
   message: {
     type: String,
@@ -65,7 +65,7 @@ async function createPayment(customerId, tuitionFeeId, amount, message = '') {
     tuition_fee_id: tuitionFeeId,
     amount,
     message, 
-    status: 'PENDING'
+    status: 'CANCELLED'
   });
 
   await payment.save();
@@ -77,6 +77,14 @@ async function completePayment(paymentId) {
   return await Payment.findOneAndUpdate(
     { payment_id: paymentId },
     { status: 'COMPLETED' },
+    { new: true }
+  );
+}
+
+async function cancelPayment(paymentId) {
+  return await Payment.findOneAndUpdate(
+    { payment_id: paymentId },
+    { status: 'CANCELLED' },
     { new: true }
   );
 }
@@ -96,7 +104,8 @@ async function getPaymentsByTuition(tuitionFeeId) {
 module.exports = { 
   Payment, 
   createPayment, 
-  completePayment, 
+  completePayment,
+  cancelPayment, 
   getPaymentById, 
   getPaymentsByCustomer, 
   getPaymentsByTuition 
