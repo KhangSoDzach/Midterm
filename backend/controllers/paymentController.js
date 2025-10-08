@@ -1,5 +1,5 @@
 const { findTuitionByStudentId, findTuitionById, updateTuitionStatus } = require('../models/tuitionModel');
-const { createPayment, completePayment, cancelPayment, getPaymentById } = require('../models/paymentModel');
+const { createPayment, completePayment, getPaymentById } = require('../models/paymentModel');
 const { updateBalance, findCustomerById } = require('../models/customerModel');
 const { sendOtpEmail } = require('../utils/email');
 const jwt = require('jsonwebtoken');
@@ -81,8 +81,8 @@ async function completeTuitionPayment(req, res) {
   }
 
   const payment = await getPaymentById(paymentId);
-  if (!payment || payment.status !== 'CANCELLED') {
-    return res.status(400).json({ message: 'Invalid payment or payment already processed' });
+  if (!payment || payment.status !== 'PENDING') {
+    return res.status(400).json({ message: 'Invalid payment' });
   }
 
   const completedPayment = await completePayment(paymentId);
