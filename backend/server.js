@@ -5,6 +5,7 @@ const { connectDB } = require('./config/db');
 const dotenv = require('dotenv');
 const path = require('path');
 
+
 // Configure dotenv to look for .env file in the backend directory
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -12,6 +13,7 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 connectDB();
 
 const app = express();
+
 app.use(bodyParser.json());
 
 // Serve static files from frontend directory

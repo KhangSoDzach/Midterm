@@ -81,30 +81,46 @@ async function completeTuitionPayment(req, res) {
   }
 
   const payment = await getPaymentById(paymentId);
-  if (!payment || payment.status !== 'CANCELLED') {
-    return res.status(400).json({ message: 'Invalid payment or payment already processed' });
+  if (!payment) {
+    return res.status(404).json({ message: 'Payment not found' });
   }
 
-  const completedPayment = await completePayment(paymentId);
-  
-  await updateBalance(payment.customer_id, payment.amount);
-  
-  await updateTuitionStatus(payment.tuition_fee_id, 'PAID');
-  
-  const tuition = await findTuitionById(payment.tuition_fee_id);
-  
+  if (payment.status !== 'PENDING') {
+    return res.status(400).json({ message: 'Payment already processed or invalid' });
+  }
+
+  const updatedPayment = await Payment.findOneAndUpdate(
+    { _id: paymentId, status: 'PENDING' }, 
+    { $set: { status: 'COMPLETED', payment_date: new Date() } },
+    { new: true }
+  );
+
+  if (!updatedPayment) {
+    return res.status(409).json({ message: 'Payment already processed by another session' });
+  }
+
+  const tuition = await findTuitionById(updatedPayment.tuition_fee_id);
+  if (!tuition) {
+    return res.status(404).json({ message: 'Tuition not found' });
+  }
+
+  await updateBalance(updatedPayment.customer_id, updatedPayment.amount);
+
+  await updateTuitionStatus(updatedPayment.tuition_fee_id, 'PAID');
+
   const invoice = {
-    paymentId: payment.payment_id,
+    paymentId: updatedPayment.payment_id,
     studentName: tuition.student_name,
     studentId: tuition.student_id,
-    tuitionFeeId: payment.tuition_fee_id,
-    amount: payment.amount,
-    message:payment.message,
-    paymentDate: payment.payment_date,
+    tuitionFeeId: updatedPayment.tuition_fee_id,
+    amount: updatedPayment.amount,
+    message: updatedPayment.message,
+    paymentDate: updatedPayment.payment_date,
     status: 'Success'
   };
 
   res.json({ invoice });
 }
+
 
 module.exports = { searchTuition, getTuitionById, createTuitionPayment, completeTuitionPayment };

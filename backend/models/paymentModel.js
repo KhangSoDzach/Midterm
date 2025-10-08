@@ -39,14 +39,12 @@ const paymentSchema = new mongoose.Schema({
 });
 
 
-// Index để tối ưu hóa truy vấn
 paymentSchema.index({ customer_id: 1 });
 paymentSchema.index({ tuition_fee_id: 1 });
 paymentSchema.index({ payment_date: 1 });
 
 const Payment = mongoose.model('Payment', paymentSchema);
 
-// Tạo payment ID tự động
 async function generatePaymentId() {
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');

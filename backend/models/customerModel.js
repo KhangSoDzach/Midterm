@@ -57,11 +57,14 @@ async function findCustomerById(customerId) {
 }
 
 async function updateBalance(customerId, amount) {
-  return await Customer.findOneAndUpdate(
-    { customer_id: customerId },
-    { $inc: { available_balance: -amount } },
+  const result = await Customer.findOneAndUpdate(
+    { _id: customerId, available_balance: { $gte: amount } }, 
+    { $inc: { available_balance: -amount } }, 
     { new: true }
   );
+  if (!result) {
+    throw new Error("Insufficient balance or balance updated by another payment");
+  }
+  return result;
 }
-
 module.exports = { Customer, findCustomerByUsername, findCustomerById, updateBalance };
