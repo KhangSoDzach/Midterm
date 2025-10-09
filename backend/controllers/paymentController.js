@@ -54,6 +54,8 @@ async function createTuitionPayment(req, res) {
 
   await sendOtpEmail(customer.email, otp);
 
+  console.log(`Created payment ${paymentId} with OTP: ${otp}`); // Log để debug
+
   res.json({ 
     paymentId,
     otpToken, 
@@ -107,4 +109,72 @@ async function completeTuitionPayment(req, res) {
   res.json({ invoice });
 }
 
-module.exports = { searchTuition, getTuitionById, createTuitionPayment, completeTuitionPayment };
+async function resendOtp(req, res) {
+  const { paymentId } = req.body;
+  const customerId = req.user.customerId;
+
+  console.log(`Resend OTP request - PaymentId: ${paymentId}, CustomerId: ${customerId}`);
+
+  try {
+    // Kiểm tra payment có tồn tại và thuộc về customer này không
+    const payment = await getPaymentById(paymentId);
+    console.log(`Payment found:`, payment);
+    
+    if (!payment) {
+      console.log('Payment not found');
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    if (payment.customer_id !== customerId) {
+      console.log(`Customer mismatch - Payment belongs to: ${payment.customer_id}, Request from: ${customerId}`);
+      return res.status(403).json({ message: 'Unauthorized access to payment' });
+    }
+
+    // Kiểm tra payment phải ở trạng thái pending (CANCELLED trong hệ thống này có nghĩa là đang pending OTP)
+    console.log(`Payment status: ${payment.status}`);
+    if (payment.status === 'COMPLETED') {
+      console.log('Payment already completed');
+      return res.status(400).json({ message: 'Payment already completed' });
+    }
+
+    if (payment.status === 'FAILED') {
+      console.log('Payment has failed');
+      return res.status(400).json({ message: 'Payment has failed, cannot resend OTP' });
+    }
+
+    // Lấy thông tin customer để gửi email
+    const customer = await findCustomerById(customerId);
+    console.log(`Customer found:`, customer?.email);
+    
+    if (!customer) {
+      console.log('Customer not found');
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    // Tạo OTP mới
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Tạo token mới
+    const otpToken = jwt.sign(
+      { otp, paymentId },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+
+    // Gửi OTP mới qua email
+    await sendOtpEmail(customer.email, otp);
+
+    console.log(`Resend OTP for payment ${paymentId}: ${otp} to email: ${customer.email}`); // Log để debug
+
+    res.json({ 
+      otpToken, 
+      message: 'New OTP sent to your email successfully'
+    });
+
+  } catch (error) {
+    console.error('Error resending OTP:', error);
+    res.status(500).json({ message: 'Server error while resending OTP' });
+  }
+}
+
+module.exports = { searchTuition, getTuitionById, createTuitionPayment, completeTuitionPayment, resendOtp };

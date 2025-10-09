@@ -156,9 +156,38 @@
       document.getElementById('user-name').textContent = currentUser.full_name;
       document.getElementById('user-balance').textContent = 
         `Balance: ${formatCurrency(currentUser.balance)}`;
+      
+      // Fetch updated balance for real-time display
+      fetchLatestBalance();
     } catch (err) {
       console.error("Error", err);
       logout();
+    }
+  }
+
+  // Function to fetch latest balance
+  async function fetchLatestBalance() {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const userProfile = await response.json();
+        document.getElementById('user-balance').textContent = 
+          `Balance: ${formatCurrency(userProfile.balance)}`;
+        
+        // Update localStorage
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        const updatedUser = { ...currentUser, balance: userProfile.balance };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error('Error fetching latest balance:', error);
     }
   }
 
@@ -250,19 +279,33 @@
   async function resendOtp() {
     const paymentId = localStorage.getItem('paymentId');
     const token = localStorage.getItem('token');
+    
+    console.log('Resend OTP clicked:', { paymentId, token: token ? 'exists' : 'missing' });
+    
     if (!paymentId || !token) {
       alert('Missing payment session. Please start again.');
       window.location.href = 'index.html';
       return;
     }
     try {
+      console.log('Sending resend OTP request...');
       const res = await fetch('/api/tuition/resend-otp', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentId })
       });
+      
+      console.log('Response status:', res.status);
+      
       const data = await res.json().catch(() => ({}));
+      console.log('Response data:', data);
+      
       if (res.ok) {
+        // Cập nhật token mới
+        if (data.otpToken) {
+          localStorage.setItem('otpToken', data.otpToken);
+          console.log('Updated OTP token in localStorage');
+        }
         alert('A new OTP has been sent to your email.');
         // reset countdown
         clearInterval(countdownInterval);
@@ -271,7 +314,12 @@
         if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.style.removeProperty('background'); confirmBtn.style.removeProperty('cursor'); }
         document.getElementById('countdown-timer').classList.remove('expired');
         startCountdown();
+        // Clear OTP inputs
+        const otpInputs = document.querySelectorAll('.otp-inputs input');
+        otpInputs.forEach(input => input.value = '');
+        otpInputs[0].focus();
       } else {
+        console.error('Resend OTP failed:', data);
         alert(data.message || 'Unable to resend OTP.');
       }
     } catch (e) {
@@ -305,6 +353,14 @@
   window.addEventListener('DOMContentLoaded', function() {
     loadHeader();
     startCountdown();
+    
+    // Set up interval to refresh balance every 15 seconds
+    const balanceInterval = setInterval(fetchLatestBalance, 15000);
+    
+    // Clear interval when leaving page
+    window.addEventListener('beforeunload', () => {
+      clearInterval(balanceInterval);
+    });
   });
   
   const otpInputs = document.querySelectorAll('.otp-inputs input');

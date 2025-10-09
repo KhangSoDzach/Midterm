@@ -631,6 +631,14 @@
     // Kiểm tra authentication khi trang load
     window.addEventListener('DOMContentLoaded', function() {
       checkAuth();
+      
+      // Set up interval to refresh balance every 30 seconds for real-time updates
+      const balanceInterval = setInterval(fetchUserDetails, 30000);
+      
+      // Clear interval when leaving page
+      window.addEventListener('beforeunload', () => {
+        clearInterval(balanceInterval);
+      });
     });
     function goToPage(page) {
       window.location.href = page;
@@ -680,13 +688,15 @@
           document.getElementById('payer-phone').value = userProfile.phone_number;
           document.getElementById('payer-email').value = userProfile.email;
           
-          // Cập nhật balance trong header
+          // Cập nhật balance trong header - realtime
           document.getElementById('user-balance').textContent = `Balance: ${formatCurrency(userProfile.balance)}`;
           
           // Cập nhật localStorage với thông tin mới
           const updatedUser = { ...currentUser, ...userProfile };
           localStorage.setItem('user', JSON.stringify(updatedUser));
           currentUser = updatedUser;
+          
+          console.log('Balance updated in real-time:', formatCurrency(userProfile.balance));
         } else {
           console.error('Failed to fetch user profile');
           // Fallback to stored user info

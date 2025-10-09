@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { login, getUserProfile } = require('../controllers/authController');
-const { searchTuition, getTuitionById, createTuitionPayment, completeTuitionPayment } = require('../controllers/paymentController');
+const { searchTuition, getTuitionById, createTuitionPayment, completeTuitionPayment, resendOtp } = require('../controllers/paymentController');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -20,7 +20,7 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// Authentication routes
+
 router.post('/login', login);
 router.get('/profile', authMiddleware, getUserProfile);
 
@@ -30,6 +30,7 @@ router.get('/tuition/:tuitionFeeId', authMiddleware, getTuitionById);
 
 router.post('/tuition/create-payment', authMiddleware, createTuitionPayment);
 router.post('/tuition/complete-payment', authMiddleware, completeTuitionPayment);
+router.post('/tuition/resend-otp', authMiddleware, resendOtp);
 router.post('/tuition/cancel-payment', authMiddleware, async (req, res) => {
   try {
     const { paymentId } = req.body;
